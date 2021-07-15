@@ -5,4 +5,5 @@
 ```julia
 using Flux
 model = ESRGAN()
+ps = params(model)
 ```
