@@ -2,6 +2,7 @@
 
 #### This is gonna take a while lol
 
-```python
-print("hello")
+```julia
+using Flux
+model = ESRGAN()
 ```
