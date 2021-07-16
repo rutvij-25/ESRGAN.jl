@@ -1,4 +1,3 @@
-using Base: Flatten
 using Flux
 using Flux:@functor
 
@@ -93,7 +92,7 @@ end
 function Discriminator(in = 3,features = [64, 64, 128, 128, 256, 256, 512, 512])
     blocks = []
     for (idx,feature) in features
-        push!(blocks,ConvBlock(in,feature,k,(idx%2),1,true))
+        push!(blocks,ConvBlock(in,feature,3,(idx%2),1,true))
         in = feature
     end
     blocks = Chain(blocks...)
