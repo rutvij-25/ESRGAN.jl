@@ -63,7 +63,9 @@ mutable struct Generator
     final
 end
 
-function Generator(in=3,nc=64,nb=23)
+@functor Generator
+
+function Gen(in=3,nc=64,nb=23)
     initial = Conv((3,3),in=>nc,stride = 1,pad = 1,bias=true)
     residuals = Chain([RRDB(nc) for _ in 1:nb]...)
     conv = Conv((3,3),nc=>nc,stride = 1,pad = 1)
@@ -89,7 +91,9 @@ mutable struct Discriminator
     classifier
 end
 
-function Discriminator(in = 3,features = [64, 64, 128, 128, 256, 256, 512, 512])
+@functor Discriminator
+
+function Disc(in = 3,features = [64, 64, 128, 128, 256, 256, 512, 512])
     blocks = []
     for (idx,feature) in features
         push!(blocks,ConvBlock(in,feature,3,(idx%2),1,true))
@@ -106,4 +110,8 @@ function Discriminator(in = 3,features = [64, 64, 128, 128, 256, 256, 512, 512])
     Discriminator(blocks,classifier)
 end
 
-(m::Discriminator)(x) = m.classifier(m.blocks(x))
+function (m::Discriminator)(x)
+    x = m.blocks(x)
+    x = m.classifier(x)
+    return x
+end
