@@ -55,3 +55,32 @@ end
 
 (m::RRDB)(x) = m.rrdb(x)*m.residual_beta + x
 
+mutable struct Generator
+    initial
+    residuals
+    conv
+    upsamples
+    final
+end
+
+function Generator(in=3,nc=64,nb=23)
+    initial = Conv((3,3),in=>nc,stride = 1,pad = 1,bias=true)
+    residuals = Chain([RRDB(nc) for _ in 1:nb]...)
+    conv = Conv((3,3),nc=>nc,stride = 1,pad = 1)
+    upsamples = Chain(UpsampleBlock(nc),UpsampleBlock(nc))
+    final = Chain(
+        Conv((3,3),nc=>nc,stride = 1,pad = 1,bias = true),
+        x -> leakyrelu.(x,0.2),
+        Conv((3,3),nc=>ic,stride = 1,pad = 1,bias=true)
+    )
+    Generator(initial,residuals,conv,upsamples,final)
+end
+
+function (m::Generator)(x)
+    initial = m.initial(x)
+    x = m.conv(m.residuals(initial)) + initial
+    x = m.upsamples(x)
+    x = m.final(x)
+    return x
+end
+
