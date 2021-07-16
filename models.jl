@@ -26,6 +26,32 @@ end
 function DenseResidualBlock(in,c = 32,residual_beta = 0.2)
     blocks = []
     for i in 0:4
-        push!(blocks,Conv())
+        push!(blocks,ConvBlock((in + c*i),(i<=3 ? c : in),3,1,1,(i<=3 ? true : false)))
     end
+    return DenseResidualBlock(residual_beta,blocks)
 end
+
+function (m::DenseResidualBlock)(x) 
+    new_inputs = x
+    local out,new_inputs
+    for block in m.blocks
+        out = block(new_inputs)
+        new_inputs = cat(new_inputs,out,dims=3)
+    end
+    return m.residual_beta * out + x
+end
+
+mutable struct RRDB
+    residual_beta
+    rrdb
+end
+
+@functor RRDB
+
+function RRDB(in,residual_beta = 0.2)
+    rrdb = Chain([DenseResidualBlock(in) for _ in 1:3]...)
+    RRDB(residual_beta,rrdb)
+end
+
+(m::RRDB)(x) = m.rrdb(x)*m.residual_beta + x
+
