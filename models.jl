@@ -1,5 +1,5 @@
 using Flux
-using Flux:@functor, stride
+using Flux:@functor
 
 function ConvBlock(in,out,k,s,p,use_act)
     return Chain(
