@@ -1,3 +1,4 @@
+using Base: Flatten
 using Flux
 using Flux:@functor
 
@@ -84,3 +85,26 @@ function (m::Generator)(x)
     return x
 end
 
+mutable struct Discriminator
+    blocks
+    classifier
+end
+
+function Discriminator(in = 3,features = [64, 64, 128, 128, 256, 256, 512, 512])
+    blocks = []
+    for (idx,feature) in features
+        push!(blocks,ConvBlock(in,feature,k,(idx%2),1,true))
+        in = feature
+    end
+    blocks = Chain(blocks...)
+    classifier = Chain(
+        AdaptiveMeanPool((6,6)),
+        flatten,
+        Dense(512 * 6 * 6, 1024),
+        x -> x.leakyrelu(x,0.2),
+        Linear(1024,1)
+    )
+    Discriminator(blocks,classifier)
+end
+
+(m::Discriminator)(x) = m.classifier(m.blocks(x))
