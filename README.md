@@ -4,6 +4,8 @@
 
 ```julia
 using Flux
-model = ESRGAN()
-ps = params(model)
+G = Generator()
+D = Discriminator
+ps_g = params(G)
+ps_d = params(D)
 ```
