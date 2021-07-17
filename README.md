@@ -5,7 +5,7 @@
 ```julia
 using Flux
 G = Generator()
-D = Discriminator
+D = Discriminator()
 ps_g = params(G)
 ps_d = params(D)
 ```
