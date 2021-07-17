@@ -1,6 +1,6 @@
 # ESRGANs in Flux!
 
-#### This is gonna take a while lol
+#### WORK IN PROGRESS!
 
 ```julia
 using Flux
