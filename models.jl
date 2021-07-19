@@ -93,7 +93,7 @@ end
 
 @functor Discriminator
 
-function Disc(in_c = 3,features = [64, 64, 128, 128, 256, 256, 512, 512])
+function Discriminator(in_c = 3,features = [64, 64, 128, 128, 256, 256, 512, 512])
     blocks = []
     for (idx,feature) in features
         push!(blocks,ConvBlock(in_c,feature,3,(idx%2),1,true))
