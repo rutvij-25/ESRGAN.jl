@@ -104,7 +104,7 @@ function Discriminator(in_c = 3,features = [64, 64, 128, 128, 256, 256, 512, 512
         AdaptiveMeanPool((6,6)),
         flatten,
         Dense(512 * 6 * 6, 1024),
-        x -> x.leakyrelu(x,0.2),
+        x -> leakyrelu.(x,0.2),
         Dense(1024,1)
     )
     Discriminator(blocks,classifier)
