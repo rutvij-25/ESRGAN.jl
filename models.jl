@@ -65,7 +65,7 @@ end
 
 @functor Generator
 
-function Gen(inc=3,nc=64,nb=23)
+function Generator(inc=3,nc=64,nb=23)
     initial = Conv((3,3),inc=>nc,stride = 1,pad = 1,bias=true)
     residuals = Chain([RRDB(nc) for _ in 1:nb]...)
     conv = Conv((3,3),nc=>nc,stride = 1,pad = 1)
