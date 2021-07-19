@@ -1,17 +1,17 @@
 using Flux
 using Flux:@functor
 
-function ConvBlock(in,out,k,s,p,use_act)
+function ConvBlock(inc,out,k,s,p,use_act)
     return Chain(
-        Conv((k,k),in=>out,stride = s,pad = p,bias=true),
+        Conv((k,k),inc=>out,stride = s,pad = p,bias=true),
         use_act ? x -> leakyrelu.(x,0.2) : x -> x
     )
 end
 
-function UpsampleBlock(in,scale = 2)
+function UpsampleBlock(inc,scale = 2)
     return Chain(
         Upsample(:nearest,scale = (scale,scale)),
-        Conv((3,3),in=>in,stride = 1,pad = 1,bias=true),
+        Conv((3,3),inc=>inc,stride = 1,pad = 1,bias=true),
         x -> leakyrelu.(x,0.2)
     )
 end
@@ -23,10 +23,10 @@ end
 
 @functor DenseResidualBlock
 
-function DenseResidualBlock(in,c = 32,residual_beta = 0.2)
+function DenseResidualBlock(inc,c = 32,residual_beta = 0.2)
     blocks = []
     for i in 0:4
-        push!(blocks,ConvBlock((in + c*i),(i<=3 ? c : in),3,1,1,(i<=3 ? true : false)))
+        push!(blocks,ConvBlock((inc + c*i),(i<=3 ? c : inc),3,1,1,(i<=3 ? true : false)))
     end
     return DenseResidualBlock(residual_beta,blocks)
 end
@@ -48,8 +48,8 @@ end
 
 @functor RRDB
 
-function RRDB(in,residual_beta = 0.2)
-    rrdb = Chain([DenseResidualBlock(in) for _ in 1:3]...)
+function RRDB(inc,residual_beta = 0.2)
+    rrdb = Chain([DenseResidualBlock(inc) for _ in 1:3]...)
     RRDB(residual_beta,rrdb)
 end
 
@@ -65,15 +65,15 @@ end
 
 @functor Generator
 
-function Gen(in=3,nc=64,nb=23)
-    initial = Conv((3,3),in=>nc,stride = 1,pad = 1,bias=true)
+function Gen(inc=3,nc=64,nb=23)
+    initial = Conv((3,3),inc=>nc,stride = 1,pad = 1,bias=true)
     residuals = Chain([RRDB(nc) for _ in 1:nb]...)
     conv = Conv((3,3),nc=>nc,stride = 1,pad = 1)
     upsamples = Chain(UpsampleBlock(nc),UpsampleBlock(nc))
     final = Chain(
         Conv((3,3),nc=>nc,stride = 1,pad = 1,bias = true),
         x -> leakyrelu.(x,0.2),
-        Conv((3,3),nc=>ic,stride = 1,pad = 1,bias=true)
+        Conv((3,3),nc=>inc,stride = 1,pad = 1,bias=true)
     )
     Generator(initial,residuals,conv,upsamples,final)
 end
@@ -93,11 +93,11 @@ end
 
 @functor Discriminator
 
-function Disc(in = 3,features = [64, 64, 128, 128, 256, 256, 512, 512])
+function Disc(in_c = 3,features = [64, 64, 128, 128, 256, 256, 512, 512])
     blocks = []
     for (idx,feature) in features
-        push!(blocks,ConvBlock(in,feature,3,(idx%2),1,true))
-        in = feature
+        push!(blocks,ConvBlock(in_c,feature,3,(idx%2),1,true))
+        in_c = feature
     end
     blocks = Chain(blocks...)
     classifier = Chain(
