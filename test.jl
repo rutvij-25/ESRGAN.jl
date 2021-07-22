@@ -3,10 +3,10 @@ include("models.jl")
 D = Discriminator()
 G = Generator()
 
-x = rand(Float32,16,16,3,32)
+x = rand(Float32,64,64,3,5)
 
-#println(G(x)|>size) #(64, 64, 3, 32)
+println(G(x)|>size) #(256, 256, 3, 5)
 
-y = rand(Float32,64,64,3,32)
+y = G(x)
 
-println(D(x)|>size)
+println(D(y)|>size) #(1, 5)
