@@ -2,10 +2,16 @@ using Flux
 using Flux:@functor
 
 function ConvBlock(inc,out,k,s,p,use_act)
-    return Chain(
-        Conv((k,k),inc=>out,stride = s,pad = p,bias=true),
-        use_act ? x -> leakyrelu.(x,0.2) : x -> x
-    )
+    if use_act 
+        return Chain(
+            Conv((k,k),inc => out,stride = s,pad = p,bias=true),
+            x -> leakyrelu.(x,0.2)
+        )
+    else
+        return Chain(
+            Conv((k,k),inc => out,stride = s,pad = p,bias=true)
+        )
+    end
 end
 
 function UpsampleBlock(inc,scale = 2)
@@ -23,11 +29,15 @@ end
 
 @functor DenseResidualBlock
 
-function DenseResidualBlock(inc,c = 32,residual_beta = 0.2)
+function DenseResidualBlock(inc;c = 32,residual_beta = 0.2)
     blocks = []
     for i in 0:4
-        push!(blocks,ConvBlock((inc + c*i),(i<=3 ? c : inc),3,1,1,(i<=3 ? true : false)))
+        in_channels = inc + c*i
+        out_channels = i<=3 ? c : inc
+        use_act = i<=3 ? true : false
+        push!(blocks,ConvBlock(in_channels,out_channels,3,1,1,use_act))
     end
+
     return DenseResidualBlock(residual_beta,blocks)
 end
 
@@ -48,7 +58,7 @@ end
 
 @functor RRDB
 
-function RRDB(inc,residual_beta = 0.2)
+function RRDB(inc;residual_beta = 0.2)
     rrdb = Chain([DenseResidualBlock(inc) for _ in 1:3]...)
     RRDB(residual_beta,rrdb)
 end
@@ -93,7 +103,7 @@ end
 
 @functor Discriminator
 
-function Discriminator(in_c = 3,features = [64, 64, 128, 128, 256, 256, 512, 512])
+function Discriminator(;in_c = 3,features = [64, 64, 128, 128, 256, 256, 512, 512])
     blocks = []
     for (idx,feature) in enumerate(features)
         push!(blocks,ConvBlock(in_c,feature,3,(idx%2),1,true))
