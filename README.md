@@ -2,6 +2,8 @@
 
 #### WORK IN PROGRESS!
 
+##### MODELS DONE AND WORKING!!
+
 ```julia
 using Flux
 G = Generator()
